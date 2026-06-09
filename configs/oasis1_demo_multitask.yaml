@@ -1,0 +1,18 @@
+seed: 42
+task: oasis1_demo_multitask
+manifest: data/manifests/oasis1_demo_manifest.csv
+segmentation_root: data/processed/oasis/fast_demo
+output_dir: outputs/oasis1_demo_multitask
+pretrained_checkpoint: models/hcp_demo_smoke.ckpt
+checkpoint_path: models/oasis1_demo_multitask.ckpt
+target_shape: [64, 64, 64]
+batch_size: 1
+num_workers: 0
+max_epochs: 2
+learning_rate: 0.0001
+cognitive_target: mmse
+label_column: label
+loss_weights:
+  segmentation: 0.5
+  classification: 1.0
+  cognition: 0.05

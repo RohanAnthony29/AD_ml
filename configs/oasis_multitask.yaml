@@ -1,0 +1,18 @@
+seed: 42
+task: oasis_multitask
+manifest: data/manifests/oasis_manifest.csv
+segmentation_root: data/processed/oasis/fast
+output_dir: outputs/oasis_multitask
+pretrained_checkpoint: models/hcp_unet_encoder.ckpt
+target_shape: [128, 128, 128]
+batch_size: 1
+num_workers: 2
+max_epochs: 10
+learning_rate: 0.0001
+cognitive_target: mmse
+label_column: label
+loss_weights:
+  segmentation: 1.0
+  classification: 1.0
+  cognition: 0.25
+

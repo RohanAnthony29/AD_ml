@@ -1,0 +1,25 @@
+.venv/
+.pycache/
+__pycache__/
+*.pyc
+.DS_Store
+data/raw/
+
+# Keep raw downloads out, but include the small processed demo artifacts.
+data/processed/*
+!data/processed/hcp_ya/
+!data/processed/hcp_ya/demo/
+!data/processed/hcp_ya/fast_demo/
+!data/processed/oasis/
+data/processed/oasis/*
+!data/processed/oasis/demo/
+!data/processed/oasis/fast_demo/
+
+# Include demo checkpoints for reproducibility.
+models/*.pt
+
+# Keep training checkpoint folders out except final evaluation artifacts.
+outputs/*
+!outputs/oasis1_demo_eval/
+!outputs/oasis1_demo_eval/**
+vendor/

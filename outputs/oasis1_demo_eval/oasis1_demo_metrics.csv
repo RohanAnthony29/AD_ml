@@ -1,0 +1,2 @@
+accuracy,balanced_accuracy,mmse_mae,mmse_rmse,mean_segmentation_dice
+0.5,0.5,27.667496128939092,27.75206826473882,0.644587054848671
