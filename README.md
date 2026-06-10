@@ -130,6 +130,19 @@ Train the three-output OASIS pipeline:
 python -m src.train_multitask --config configs/oasis1_200_multitask.yaml
 ```
 
+Train the same pipeline with age/sex covariates:
+
+```bash
+python -m src.train_multitask --config configs/oasis1_200_covariates_multitask.yaml
+```
+
+Train with the optional MedicalNet-style backbone:
+
+```bash
+git clone https://github.com/Tencent/MedicalNet.git vendor/MedicalNet
+python -m src.train_multitask --config configs/oasis1_medicalnet_multitask.yaml
+```
+
 Evaluate the three outputs:
 
 ```bash
@@ -152,3 +165,15 @@ This is a public-data analogue. It demonstrates:
 It does not claim exact reproduction of ADNI/ADAS-Cog11 results without ADNI access.
 
 See `docs/project_report.md` for a concise professor-facing explanation of the current experiment, results, limitations, and next steps.
+
+## UCSF-Like Extensions
+
+The repo now includes implementation hooks for the next UCSF-like upgrades:
+
+| Upgrade | File/config | Status |
+| --- | --- | --- |
+| Co-registration | `src/coregister_mri.py` | Ready when a template MRI is available |
+| MedicalNet backbone | `configs/oasis1_medicalnet_multitask.yaml` | Ready when `vendor/MedicalNet` is cloned |
+| Richer CDR labels | `src/prepare_oasis1_demo.py` | Added for newly generated manifests |
+| Age/sex covariates | `configs/oasis1_200_covariates_multitask.yaml` | Ready for next training run |
+| Longitudinal/future prediction | `src/build_longitudinal_manifest.py` | Requires OASIS-2, ADNI, or lab follow-up data |

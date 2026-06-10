@@ -64,6 +64,9 @@ def choose_subjects(clinical_path: Path, subject_to_tar: dict[str, tuple[Path, s
     df = pd.read_excel(clinical_path)
     df = df[df["ID"].isin(present) & df["MMSE"].notna() & df["CDR"].notna()].copy()
     df["label"] = (df["CDR"].astype(float) > 0).astype(int)
+    df["cdr_binary_label"] = df["label"]
+    df["cdr_three_class_label"] = df["CDR"].astype(float).map(lambda value: 0 if value == 0 else 1 if value == 0.5 else 2)
+    df["cdr_score"] = df["CDR"].astype(float)
 
     per_class = min(max_subjects // 2, int((df["label"] == 0).sum()), int((df["label"] == 1).sum()))
     if per_class < 2:
@@ -173,6 +176,9 @@ def prepare_subject(
         "mmse": float(row["mmse"]),
         "cdr": float(row["cdr"]),
         "label": int(row["label"]),
+        "cdr_binary_label": int(row.get("cdr_binary_label", row["label"])),
+        "cdr_three_class_label": int(row.get("cdr_three_class_label", 0)),
+        "cdr_score": float(row.get("cdr_score", row["cdr"])),
     }
 
 

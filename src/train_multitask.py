@@ -11,14 +11,14 @@ from torch.utils.data import DataLoader, Subset, random_split
 
 from src.data import MriMultitaskDataset
 from src.metrics import dice_score
-from src.model import MultitaskUNet3D
+from src.model import build_multitask_model
 
 
 class LitMultitask(pl.LightningModule):
     def __init__(self, config: dict) -> None:
         super().__init__()
         self.save_hyperparameters(config)
-        self.model = MultitaskUNet3D()
+        self.model = build_multitask_model(config)
         self.loss_weights = config.get("loss_weights", {})
         self.learning_rate = float(config.get("learning_rate", 1e-4))
 
@@ -26,7 +26,7 @@ class LitMultitask(pl.LightningModule):
         return self.model(image)
 
     def shared_step(self, batch: dict, stage: str) -> torch.Tensor:
-        outputs = self(batch["image"])
+        outputs = self.model(batch["image"], batch.get("covariates"))
         segmentation_loss = F.cross_entropy(outputs["segmentation"], batch["segmentation"])
         total = self.loss_weights.get("segmentation", 1.0) * segmentation_loss
 
@@ -69,6 +69,7 @@ def load_config(path: Path) -> dict:
 
 def make_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
     shape = tuple(config.get("target_shape", [128, 128, 128]))
+    manifest = None
     if config.get("scale_cognition") and config.get("cognitive_target"):
         import pandas as pd
 
@@ -78,6 +79,26 @@ def make_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
         if len(values) > 1:
             config["cognitive_mean"] = float(values.mean())
             config["cognitive_std"] = float(values.std()) or 1.0
+    if config.get("scale_covariates") and config.get("covariate_columns"):
+        import pandas as pd
+
+        if manifest is None:
+            manifest = pd.read_csv(config["manifest"])
+        train_rows = manifest[manifest.get("split", "train").eq("train")] if "split" in manifest else manifest
+        means = {}
+        stds = {}
+        for column in config["covariate_columns"]:
+            if column not in train_rows:
+                continue
+            series = train_rows[column]
+            if series.dtype == object:
+                series = series.astype(str).str.lower().map({"m": 1.0, "male": 1.0, "f": 0.0, "female": 0.0})
+            values = series.dropna().astype(float)
+            if len(values) > 1:
+                means[column] = float(values.mean())
+                stds[column] = float(values.std()) or 1.0
+        config["covariate_means"] = means
+        config["covariate_stds"] = stds
 
     dataset = MriMultitaskDataset(
         manifest_path=config["manifest"],
@@ -87,6 +108,9 @@ def make_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
         cognitive_mean=config.get("cognitive_mean"),
         cognitive_std=config.get("cognitive_std"),
         label_column=config.get("label_column"),
+        covariate_columns=config.get("covariate_columns"),
+        covariate_means=config.get("covariate_means"),
+        covariate_stds=config.get("covariate_stds"),
         require_segmentation=True,
     )
     if len(dataset) < 2:

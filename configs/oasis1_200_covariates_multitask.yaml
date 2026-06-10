@@ -1,0 +1,22 @@
+seed: 42
+task: single_t1_anatomy_dementia_cognition_oasis1_covariates
+model_family: unet3d
+manifest: data/manifests/oasis1_200_manifest.csv
+segmentation_root: data/processed/oasis/fast_demo
+output_dir: outputs/oasis1_200_covariates_multitask
+pretrained_checkpoint: models/hcp_demo_smoke.ckpt
+checkpoint_path: models/oasis1_200_covariates_multitask.ckpt
+target_shape: [64, 64, 64]
+batch_size: 1
+num_workers: 0
+max_epochs: 12
+learning_rate: 0.0001
+cognitive_target: mmse
+scale_cognition: true
+label_column: label
+covariate_columns: [age, sex]
+scale_covariates: true
+loss_weights:
+  segmentation: 0.25
+  classification: 1.0
+  cognition: 0.5

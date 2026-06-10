@@ -28,6 +28,20 @@ def evaluate(config_path: Path, checkpoint_path: Path, output_dir: Path) -> None
         if len(values) > 1:
             cognitive_mean = float(values.mean())
             cognitive_std = float(values.std()) or 1.0
+    covariate_means = config.get("covariate_means", {})
+    covariate_stds = config.get("covariate_stds", {})
+    if config.get("scale_covariates") and config.get("covariate_columns") and not covariate_means:
+        train_manifest = manifest[manifest["split"].eq("train")] if "split" in manifest.columns else manifest
+        for column in config["covariate_columns"]:
+            if column not in train_manifest:
+                continue
+            series = train_manifest[column]
+            if series.dtype == object:
+                series = series.astype(str).str.lower().map({"m": 1.0, "male": 1.0, "f": 0.0, "female": 0.0})
+            values = series.dropna().astype(float)
+            if len(values) > 1:
+                covariate_means[column] = float(values.mean())
+                covariate_stds[column] = float(values.std()) or 1.0
 
     dataset = MriMultitaskDataset(
         manifest_path=config["manifest"],
@@ -35,6 +49,9 @@ def evaluate(config_path: Path, checkpoint_path: Path, output_dir: Path) -> None
         target_shape=tuple(config["target_shape"]),
         cognitive_target=config["cognitive_target"],
         label_column=config["label_column"],
+        covariate_columns=config.get("covariate_columns"),
+        covariate_means=covariate_means,
+        covariate_stds=covariate_stds,
         require_segmentation=True,
     )
     loader = DataLoader(dataset, batch_size=1, shuffle=False)
@@ -49,7 +66,7 @@ def evaluate(config_path: Path, checkpoint_path: Path, output_dir: Path) -> None
     visual_batches = []
     with torch.no_grad():
         for batch in loader:
-            outputs = model(batch["image"])
+            outputs = model.model(batch["image"], batch.get("covariates"))
             probability = torch.sigmoid(outputs["diagnosis_logit"]).view(-1).item()
             pred_label = int(probability >= 0.5)
             pred_mmse = outputs["cognition"].view(-1).item()

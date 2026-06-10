@@ -53,6 +53,9 @@ class MriMultitaskDataset(Dataset):
         cognitive_mean: float | None = None,
         cognitive_std: float | None = None,
         label_column: str | None = None,
+        covariate_columns: list[str] | None = None,
+        covariate_means: dict[str, float] | None = None,
+        covariate_stds: dict[str, float] | None = None,
         require_segmentation: bool = True,
     ) -> None:
         self.manifest = pd.read_csv(manifest_path)
@@ -62,6 +65,9 @@ class MriMultitaskDataset(Dataset):
         self.cognitive_mean = cognitive_mean
         self.cognitive_std = cognitive_std
         self.label_column = label_column
+        self.covariate_columns = covariate_columns or []
+        self.covariate_means = covariate_means or {}
+        self.covariate_stds = covariate_stds or {}
         self.require_segmentation = require_segmentation
 
         self.rows = []
@@ -105,10 +111,31 @@ class MriMultitaskDataset(Dataset):
         else:
             cognition = torch.tensor(float("nan"))
 
+        covariates = []
+        for column in self.covariate_columns:
+            value = row.get(column)
+            if pd.isna(value):
+                covariates.append(0.0)
+                continue
+            if isinstance(value, str):
+                normalized = value.strip().lower()
+                if normalized in {"m", "male"}:
+                    numeric_value = 1.0
+                elif normalized in {"f", "female"}:
+                    numeric_value = 0.0
+                else:
+                    numeric_value = 0.0
+            else:
+                numeric_value = float(value)
+            if column in self.covariate_means and column in self.covariate_stds and self.covariate_stds[column]:
+                numeric_value = (numeric_value - self.covariate_means[column]) / self.covariate_stds[column]
+            covariates.append(float(numeric_value))
+
         return {
             "image": image.float(),
             "segmentation": segmentation,
             "label": label,
             "cognition": cognition,
+            "covariates": torch.tensor(covariates, dtype=torch.float32),
             "subject_id": str(row.get("subject_id", "")),
         }

@@ -2,7 +2,16 @@ project_goal: single_t1_to_anatomy_dementia_cognition
 
 pipeline:
   input: single T1-weighted MRI
-  shared_representation: 3D anatomical encoder
+  shared_representation: 3D anatomical encoder, optionally UNet or MedicalNet
+  preprocessing_upgrades:
+    co_registration:
+      script: src/coregister_mri.py
+      tool: FSL FLIRT
+      status: ready when template MRI is available
+    segmentation:
+      script: src/run_fast_segmentations.py
+      tool: FSL FAST
+      status: ready
   outputs:
     anatomical_representation_segmentation:
       target: FSL-FAST tissue labels
@@ -13,15 +22,18 @@ pipeline:
         - white_matter
       metric: Dice
     dementia_classification:
-      target: CDR-derived binary label
-      label_rule: label = 0 if CDR == 0, label = 1 if CDR > 0
+      target: richer CDR-derived labels
+      label_options:
+        binary: label = 0 if CDR == 0, label = 1 if CDR > 0
+        three_class: CDR 0 vs CDR 0.5 vs CDR 1+
+        continuous: CDR score regression
       metrics:
         - accuracy
         - balanced_accuracy
         - AUC
         - confusion_matrix
     cognitive_prediction:
-      target: MMSE
+      target: MMSE, or future MMSE delta when longitudinal data is available
       metrics:
         - MAE
         - RMSE
@@ -29,6 +41,8 @@ pipeline:
 current_public_demo:
   dataset: OASIS-1
   config: configs/oasis1_200_multitask.yaml
+  covariate_config: configs/oasis1_200_covariates_multitask.yaml
+  medicalnet_config: configs/oasis1_medicalnet_multitask.yaml
   manifest: data/manifests/oasis1_200_manifest.csv
   checkpoint_on_aws: /home/ubuntu/alzheimers-mri-reproduction/models/oasis1_200_multitask.ckpt
   outputs: outputs/oasis1_200_eval
@@ -45,3 +59,15 @@ current_public_demo:
     mmse_mae: 2.62
     mmse_rmse: 3.37
   status: pipeline works end-to-end; segmentation is strong; dementia classification needs better data, preprocessing, compute, and tuning
+
+next_upgrades:
+  age_sex_covariates:
+    status: implemented
+    config_keys:
+      - covariate_columns
+      - scale_covariates
+  medicalnet:
+    status: adapter implemented; run requires vendor/MedicalNet clone and sufficient compute
+  longitudinal_prediction:
+    status: manifest builder implemented; requires OASIS-2, ADNI, or lab longitudinal visits
+    script: src/build_longitudinal_manifest.py

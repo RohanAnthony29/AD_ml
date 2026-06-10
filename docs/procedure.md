@@ -65,7 +65,7 @@ data/raw/oasis/
 OASIS manifest columns:
 
 ```text
-subject_id,session_id,mri_path,age,sex,mmse,cdr,label
+subject_id,session_id,mri_path,age,sex,mmse,cdr,label,cdr_binary_label,cdr_three_class_label,cdr_score
 ```
 
 HCP-YA manifest columns:
@@ -81,15 +81,36 @@ label = 0 if CDR == 0
 label = 1 if CDR > 0
 ```
 
+Richer label columns now supported:
+
+```text
+cdr_binary_label       CDR 0 vs CDR > 0
+cdr_three_class_label  CDR 0 vs CDR 0.5 vs CDR 1+
+cdr_score              raw CDR severity score
+mmse                   continuous cognition target
+```
+
 ## 7. Preprocess MRI
 
 For every T1 MRI:
 
 1. Convert to NIfTI if needed.
 2. Reorient/standardize.
-3. Skull-strip if required.
-4. Resize/crop to a fixed shape, for example 128 x 128 x 128.
-5. Normalize voxel intensity.
+3. Co-register to a common template when a template is available.
+4. Skull-strip if required.
+5. Resize/crop to a fixed shape, for example 128 x 128 x 128.
+6. Normalize voxel intensity.
+
+Co-registration command:
+
+```bash
+python -m src.coregister_mri \
+  --manifest data/manifests/oasis1_200_manifest.csv \
+  --template /path/to/MNI152_T1_1mm_brain.nii.gz \
+  --output-root data/processed/oasis/coregistered \
+  --output-manifest data/manifests/oasis1_200_coreg_manifest.csv \
+  --fsl-dir ~/fsl
+```
 
 ## 8. Generate Segmentation Targets
 
@@ -147,6 +168,40 @@ Current public OASIS-1 demo command:
 
 ```bash
 python -m src.train_multitask --config configs/oasis1_200_multitask.yaml
+```
+
+MedicalNet-style backbone command:
+
+```bash
+git clone https://github.com/Tencent/MedicalNet.git vendor/MedicalNet
+python -m src.train_multitask --config configs/oasis1_medicalnet_multitask.yaml
+```
+
+The MedicalNet config keeps the same three output tasks, but swaps the encoder to a MedicalNet-style 3D ResNet backbone.
+
+## 10.1. Longitudinal/Future Prediction
+
+OASIS-1 is cross-sectional, so it cannot support future decline prediction by itself. For OASIS-2, ADNI, or lab longitudinal data, build a baseline-to-future manifest:
+
+```bash
+python -m src.build_longitudinal_manifest \
+  --clinical data/raw/oasis2/clinical.csv \
+  --baseline-manifest data/manifests/oasis2_baseline_manifest.csv \
+  --output data/manifests/oasis2_longitudinal_manifest.csv \
+  --subject-col subject_id \
+  --visit-col visit \
+  --mmse-col mmse \
+  --cdr-col cdr
+```
+
+This adds targets such as:
+
+```text
+future_mmse
+future_mmse_delta
+future_cdr
+future_cdr_delta
+future_decline_label
 ```
 
 ## 11. Evaluation
