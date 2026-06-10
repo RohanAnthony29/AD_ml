@@ -1,6 +1,15 @@
-# Alzheimer's MRI Multitask Reproduction Scaffold
+# Single-MRI Alzheimer's Multitask Pipeline
 
-This project reproduces the modeling strategy of Ma et al. using public substitute datasets. HCP-YA is used for segmentation/anatomical pretraining, and OASIS-1/2 is used as an ADNI substitute for dementia classification and cognitive/severity prediction.
+This project implements a public-data prototype of the Ma et al. UCSF modeling strategy:
+
+```text
+Single T1 MRI scan
+-> anatomical representation / tissue segmentation
+-> dementia classification
+-> cognitive prediction
+```
+
+The current implementation uses OASIS-1 as an ADNI substitute. Each subject contributes one T1-weighted MRI scan, FSL-FAST provides gray matter / white matter / CSF tissue labels, and a 3D multitask network learns one shared anatomical representation with three outputs: segmentation, dementia probability, and MMSE prediction.
 
 Original paper:
 
@@ -11,10 +20,21 @@ Original paper:
 ## Target Pipeline
 
 ```text
-Single T1 MRI scan
--> brain segmentation/anatomy representation
--> dementia classification
--> cognitive/severity prediction
+Input:
+  Single T1-weighted MRI volume
+
+Shared representation:
+  3D encoder learns anatomical MRI features
+
+Outputs:
+  1. Anatomical representation / segmentation
+     - FAST-style background / CSF / gray matter / white matter labels
+
+  2. Dementia classification
+     - OASIS label: CDR 0 = control, CDR > 0 = impaired/dementia
+
+  3. Cognitive prediction
+     - MMSE regression on the 0-30 clinical scale
 ```
 
 ## Dataset Mapping
@@ -43,6 +63,30 @@ outputs/
 src/
 vendor/
 ```
+
+## Current OASIS-1 Experiment
+
+The main public-data run is configured in `configs/oasis1_200_multitask.yaml`. It uses the maximum balanced OASIS-1 subset available in this setup:
+
+```text
+174 subjects total
+121 train / 26 validation / 27 test
+64 x 64 x 64 downsampled MRI volumes
+FSL-FAST tissue segmentation targets
+CDR 0 vs CDR > 0 dementia label
+MMSE cognitive regression target
+```
+
+Current test results:
+
+| Output | Metric | Test result | Interpretation |
+| --- | ---: | ---: | --- |
+| Anatomical segmentation | Dice | 0.884 | The model learned tissue/anatomy segmentation well. |
+| Dementia classification | Balanced accuracy | 0.500 | Not clinically successful yet; predictions stayed near the decision boundary. |
+| Dementia classification | AUC | 0.758 | Ranking signal exists, but the fixed 0.5 threshold did not separate classes. |
+| Cognitive prediction | MMSE MAE | 2.62 | The model mostly predicts near the cohort mean; useful baseline, not final. |
+
+This means the project currently demonstrates the full technical pipeline, but it does not yet claim a reliable AD detector.
 
 ## Quick Start
 
@@ -80,21 +124,31 @@ Train segmentation pretraining on HCP-YA:
 python -m src.train_multitask --config configs/hcp_segmentation_pretrain.yaml
 ```
 
-Fine-tune/evaluate on OASIS:
+Train the three-output OASIS pipeline:
 
 ```bash
-python -m src.train_multitask --config configs/oasis_multitask.yaml
+python -m src.train_multitask --config configs/oasis1_200_multitask.yaml
+```
+
+Evaluate the three outputs:
+
+```bash
+python -m src.evaluate_oasis1_demo \
+  --config configs/oasis1_200_multitask.yaml \
+  --checkpoint models/oasis1_200_multitask.ckpt \
+  --output-dir outputs/oasis1_200_eval
 ```
 
 ## Current Scope
 
-This is a public-data analogue. It can demonstrate:
+This is a public-data analogue. It demonstrates:
 
 - T1 MRI input handling
 - FSL-FAST tissue segmentation targets
-- 3D UNet-style segmentation/anatomy representation
-- Dementia classification from a single MRI
-- Cognitive/severity prediction using OASIS variables such as MMSE or CDR
+- 3D UNet-style anatomical representation / segmentation
+- Dementia classification from a single MRI using CDR-derived labels
+- Cognitive prediction from a single MRI using MMSE
 
 It does not claim exact reproduction of ADNI/ADAS-Cog11 results without ADNI access.
 
+See `docs/project_report.md` for a concise professor-facing explanation of the current experiment, results, limitations, and next steps.

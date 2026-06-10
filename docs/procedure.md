@@ -1,8 +1,17 @@
-# Step-by-Step Replication Procedure
+# Step-by-Step Procedure: Single MRI to Anatomy, Dementia, and Cognition
 
 ## 1. Define Scope
 
-This project reproduces the modeling strategy of Ma et al. using public substitute datasets. HCP-YA is used for segmentation/anatomical pretraining, and OASIS-1/2 is used as an ADNI substitute for dementia classification and cognitive/severity prediction.
+This project reproduces the modeling strategy of Ma et al. using public substitute datasets. The target workflow is:
+
+```text
+Single T1 MRI
+-> anatomical representation / segmentation
+-> dementia classification
+-> cognitive prediction
+```
+
+HCP-YA can be used for segmentation/anatomical pretraining. OASIS-1/2 is used as an ADNI substitute for dementia classification and MMSE/CDR prediction.
 
 ## 2. Get Code
 
@@ -104,24 +113,45 @@ Output: GM / WM / CSF / background segmentation
 
 Save encoder weights for OASIS fine-tuning.
 
-## 10. OASIS Multitask Training
+## 10. OASIS Three-Output Multitask Training
 
 Fine-tune on OASIS:
 
 ```text
-Inputs: T1 MRI, optional age/sex
-Outputs: segmentation map, dementia classification, MMSE or CDR prediction
+Input:
+  T1 MRI
+
+Shared representation:
+  3D encoder anatomical features
+
+Output 1:
+  tissue segmentation map
+
+Output 2:
+  dementia classification
+
+Output 3:
+  MMSE or CDR cognitive/severity prediction
 ```
 
 Loss:
 
 ```text
-total_loss = segmentation_loss + classification_loss + cognitive_regression_loss
+total_loss =
+  segmentation_loss
+  + classification_loss
+  + cognitive_regression_loss
+```
+
+Current public OASIS-1 demo command:
+
+```bash
+python -m src.train_multitask --config configs/oasis1_200_multitask.yaml
 ```
 
 ## 11. Evaluation
 
-Segmentation:
+Anatomical representation / segmentation:
 
 - Dice score
 
@@ -141,6 +171,15 @@ Cognitive/severity prediction:
 - R2
 - Pearson/Spearman correlation
 
+Current public OASIS-1 evaluation command:
+
+```bash
+python -m src.evaluate_oasis1_demo \
+  --config configs/oasis1_200_multitask.yaml \
+  --checkpoint models/oasis1_200_multitask.ckpt \
+  --output-dir outputs/oasis1_200_eval
+```
+
 ## 12. Compare to Paper
 
 | Paper task | Public-data analogue |
@@ -150,4 +189,3 @@ Cognitive/severity prediction:
 | ADAS-Cog11 | MMSE or CDR |
 | CN/MCI/AD | CDR 0 vs CDR > 0 |
 | Longitudinal cognition | OASIS-2 follow-up, if used |
-

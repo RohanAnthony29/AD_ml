@@ -1,5 +1,5 @@
 seed: 42
-task: oasis1_200_multitask
+task: single_t1_anatomy_dementia_cognition_oasis1
 manifest: data/manifests/oasis1_200_manifest.csv
 segmentation_root: data/processed/oasis/fast_demo
 output_dir: outputs/oasis1_200_multitask

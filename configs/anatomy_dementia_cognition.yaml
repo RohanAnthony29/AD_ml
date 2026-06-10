@@ -1,0 +1,47 @@
+project_goal: single_t1_to_anatomy_dementia_cognition
+
+pipeline:
+  input: single T1-weighted MRI
+  shared_representation: 3D anatomical encoder
+  outputs:
+    anatomical_representation_segmentation:
+      target: FSL-FAST tissue labels
+      classes:
+        - background
+        - CSF
+        - gray_matter
+        - white_matter
+      metric: Dice
+    dementia_classification:
+      target: CDR-derived binary label
+      label_rule: label = 0 if CDR == 0, label = 1 if CDR > 0
+      metrics:
+        - accuracy
+        - balanced_accuracy
+        - AUC
+        - confusion_matrix
+    cognitive_prediction:
+      target: MMSE
+      metrics:
+        - MAE
+        - RMSE
+
+current_public_demo:
+  dataset: OASIS-1
+  config: configs/oasis1_200_multitask.yaml
+  manifest: data/manifests/oasis1_200_manifest.csv
+  checkpoint_on_aws: /home/ubuntu/alzheimers-mri-reproduction/models/oasis1_200_multitask.ckpt
+  outputs: outputs/oasis1_200_eval
+  subjects:
+    total: 174
+    train: 121
+    val: 26
+    test: 27
+  test_metrics:
+    segmentation_dice: 0.884
+    dementia_accuracy: 0.519
+    dementia_balanced_accuracy: 0.500
+    dementia_auc: 0.758
+    mmse_mae: 2.62
+    mmse_rmse: 3.37
+  status: pipeline works end-to-end; segmentation is strong; dementia classification needs better data, preprocessing, compute, and tuning
