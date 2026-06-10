@@ -8,7 +8,7 @@ import nibabel as nib
 import numpy as np
 import pandas as pd
 import torch
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, confusion_matrix, mean_absolute_error, mean_squared_error
+from sklearn.metrics import accuracy_score, balanced_accuracy_score, confusion_matrix, mean_absolute_error, mean_squared_error, roc_auc_score
 from torch.utils.data import DataLoader
 
 from src.data import MriMultitaskDataset
@@ -20,6 +20,14 @@ def evaluate(config_path: Path, checkpoint_path: Path, output_dir: Path) -> None
     output_dir.mkdir(parents=True, exist_ok=True)
     config = load_config(config_path)
     manifest = pd.read_csv(config["manifest"])
+    cognitive_mean = config.get("cognitive_mean")
+    cognitive_std = config.get("cognitive_std")
+    if config.get("scale_cognition") and config.get("cognitive_target") and (cognitive_mean is None or cognitive_std is None):
+        train_manifest = manifest[manifest["split"].eq("train")] if "split" in manifest.columns else manifest
+        values = train_manifest[config["cognitive_target"]].dropna().astype(float)
+        if len(values) > 1:
+            cognitive_mean = float(values.mean())
+            cognitive_std = float(values.std()) or 1.0
 
     dataset = MriMultitaskDataset(
         manifest_path=config["manifest"],
@@ -33,6 +41,9 @@ def evaluate(config_path: Path, checkpoint_path: Path, output_dir: Path) -> None
 
     model = LitMultitask.load_from_checkpoint(checkpoint_path, config=config, map_location="cpu")
     model.eval()
+    ckpt_config = model.hparams if hasattr(model, "hparams") else config
+    cognitive_mean = ckpt_config.get("cognitive_mean", cognitive_mean)
+    cognitive_std = ckpt_config.get("cognitive_std", cognitive_std)
 
     rows = []
     visual_batches = []
@@ -42,6 +53,8 @@ def evaluate(config_path: Path, checkpoint_path: Path, output_dir: Path) -> None
             probability = torch.sigmoid(outputs["diagnosis_logit"]).view(-1).item()
             pred_label = int(probability >= 0.5)
             pred_mmse = outputs["cognition"].view(-1).item()
+            if cognitive_mean is not None and cognitive_std:
+                pred_mmse = pred_mmse * float(cognitive_std) + float(cognitive_mean)
             dice = dice_score(outputs["segmentation"], batch["segmentation"]).item()
 
             subject_id = batch["subject_id"][0]
@@ -49,11 +62,12 @@ def evaluate(config_path: Path, checkpoint_path: Path, output_dir: Path) -> None
             rows.append(
                 {
                     "subject_id": subject_id,
+                    "split": clinical.get("split", "all"),
                     "true_cdr": float(clinical["cdr"]),
                     "true_label": int(batch["label"].item()),
                     "pred_label": pred_label,
                     "predicted_dementia_probability": probability,
-                    "true_mmse": float(batch["cognition"].item()),
+                    "true_mmse": float(clinical["mmse"]),
                     "predicted_mmse": pred_mmse,
                     "segmentation_dice": dice,
                 }
@@ -65,22 +79,34 @@ def evaluate(config_path: Path, checkpoint_path: Path, output_dir: Path) -> None
     predictions = pd.DataFrame(rows)
     predictions.to_csv(output_dir / "oasis1_demo_predictions.csv", index=False)
 
+    metric_rows = []
+    for split_name, split_df in [("all", predictions)] + list(predictions.groupby("split")):
+        if len(split_df) == 0:
+            continue
+        y_true = split_df["true_label"]
+        y_pred = split_df["pred_label"]
+        try:
+            auc = roc_auc_score(y_true, split_df["predicted_dementia_probability"]) if y_true.nunique() == 2 else float("nan")
+        except ValueError:
+            auc = float("nan")
+        metric_rows.append(
+            {
+                "split": split_name,
+                "n": len(split_df),
+                "accuracy": accuracy_score(y_true, y_pred),
+                "balanced_accuracy": balanced_accuracy_score(y_true, y_pred),
+                "auc": auc,
+                "mmse_mae": mean_absolute_error(split_df["true_mmse"], split_df["predicted_mmse"]),
+                "mmse_rmse": mean_squared_error(split_df["true_mmse"], split_df["predicted_mmse"]) ** 0.5,
+                "mean_segmentation_dice": split_df["segmentation_dice"].mean(),
+            }
+        )
+    metrics = pd.DataFrame(metric_rows)
+    metrics.to_csv(output_dir / "oasis1_demo_metrics.csv", index=False)
+
     y_true = predictions["true_label"]
     y_pred = predictions["pred_label"]
     cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
-    metrics = pd.DataFrame(
-        [
-            {
-                "accuracy": accuracy_score(y_true, y_pred),
-                "balanced_accuracy": balanced_accuracy_score(y_true, y_pred),
-                "mmse_mae": mean_absolute_error(predictions["true_mmse"], predictions["predicted_mmse"]),
-                "mmse_rmse": mean_squared_error(predictions["true_mmse"], predictions["predicted_mmse"]) ** 0.5,
-                "mean_segmentation_dice": predictions["segmentation_dice"].mean(),
-            }
-        ]
-    )
-    metrics.to_csv(output_dir / "oasis1_demo_metrics.csv", index=False)
-
     fig, ax = plt.subplots(figsize=(4, 4))
     ax.imshow(cm, cmap="Blues")
     ax.set_xticks([0, 1], labels=["Pred CDR=0", "Pred CDR>0"])

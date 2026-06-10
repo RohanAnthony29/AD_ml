@@ -69,11 +69,23 @@ def load_config(path: Path) -> dict:
 
 def make_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
     shape = tuple(config.get("target_shape", [128, 128, 128]))
+    if config.get("scale_cognition") and config.get("cognitive_target"):
+        import pandas as pd
+
+        manifest = pd.read_csv(config["manifest"])
+        train_rows = manifest[manifest.get("split", "train").eq("train")] if "split" in manifest else manifest
+        values = train_rows[config["cognitive_target"]].dropna().astype(float)
+        if len(values) > 1:
+            config["cognitive_mean"] = float(values.mean())
+            config["cognitive_std"] = float(values.std()) or 1.0
+
     dataset = MriMultitaskDataset(
         manifest_path=config["manifest"],
         segmentation_root=config["segmentation_root"],
         target_shape=shape,
         cognitive_target=config.get("cognitive_target"),
+        cognitive_mean=config.get("cognitive_mean"),
+        cognitive_std=config.get("cognitive_std"),
         label_column=config.get("label_column"),
         require_segmentation=True,
     )
@@ -87,9 +99,20 @@ def make_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
             )
         raise ValueError(f"Need at least 2 usable samples, found {len(dataset)}.")
 
-    val_size = max(1, int(round(len(dataset) * 0.2)))
-    train_size = len(dataset) - val_size
-    train_ds, val_ds = random_split(dataset, [train_size, val_size], generator=torch.Generator().manual_seed(config.get("seed", 42)))
+    if dataset.rows and "split" in dataset.rows[0][0]:
+        train_indices = [i for i, (row, _) in enumerate(dataset.rows) if row["split"] == "train"]
+        val_indices = [i for i, (row, _) in enumerate(dataset.rows) if row["split"] == "val"]
+        if train_indices and val_indices:
+            train_ds = Subset(dataset, train_indices)
+            val_ds = Subset(dataset, val_indices)
+        else:
+            val_size = max(1, int(round(len(dataset) * 0.2)))
+            train_size = len(dataset) - val_size
+            train_ds, val_ds = random_split(dataset, [train_size, val_size], generator=torch.Generator().manual_seed(config.get("seed", 42)))
+    else:
+        val_size = max(1, int(round(len(dataset) * 0.2)))
+        train_size = len(dataset) - val_size
+        train_ds, val_ds = random_split(dataset, [train_size, val_size], generator=torch.Generator().manual_seed(config.get("seed", 42)))
 
     return (
         DataLoader(train_ds, batch_size=config.get("batch_size", 1), shuffle=True, num_workers=config.get("num_workers", 0)),

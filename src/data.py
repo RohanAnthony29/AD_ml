@@ -50,6 +50,8 @@ class MriMultitaskDataset(Dataset):
         segmentation_root: str | Path,
         target_shape: tuple[int, int, int],
         cognitive_target: str | None = None,
+        cognitive_mean: float | None = None,
+        cognitive_std: float | None = None,
         label_column: str | None = None,
         require_segmentation: bool = True,
     ) -> None:
@@ -57,6 +59,8 @@ class MriMultitaskDataset(Dataset):
         self.segmentation_root = Path(segmentation_root)
         self.target_shape = target_shape
         self.cognitive_target = cognitive_target
+        self.cognitive_mean = cognitive_mean
+        self.cognitive_std = cognitive_std
         self.label_column = label_column
         self.require_segmentation = require_segmentation
 
@@ -94,7 +98,10 @@ class MriMultitaskDataset(Dataset):
         label = torch.tensor(float(row[self.label_column]), dtype=torch.float32) if self.label_column else torch.tensor(float("nan"))
 
         if self.cognitive_target and self.cognitive_target in row and pd.notna(row[self.cognitive_target]):
-            cognition = torch.tensor(float(row[self.cognitive_target]), dtype=torch.float32)
+            cognition_value = float(row[self.cognitive_target])
+            if self.cognitive_mean is not None and self.cognitive_std:
+                cognition_value = (cognition_value - self.cognitive_mean) / self.cognitive_std
+            cognition = torch.tensor(cognition_value, dtype=torch.float32)
         else:
             cognition = torch.tensor(float("nan"))
 
