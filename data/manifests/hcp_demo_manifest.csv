@@ -1,2 +1,0 @@
-subject_id,mri_path,segmentation_path,age,sex
-100206,data/processed/hcp_ya/demo/100206_T1w_sub4.nii.gz,data/processed/hcp_ya/fast_demo/100206/100206_sub4_seg.nii.gz,26,M

@@ -48,7 +48,7 @@ OASIS-1 or OASIS-2:
 
 - Source: https://www.oasis-brains.org/
 - Use T1-weighted MRI and clinical CSV.
-- OASIS-1 is best for a fast cross-sectional demo.
+- OASIS-1 is best for a cross-sectional baseline experiment.
 - OASIS-2 is better if longitudinal/severity change is needed.
 
 ## 5. Organize Data
@@ -164,7 +164,7 @@ total_loss =
   + cognitive_regression_loss
 ```
 
-Current public OASIS-1 demo command:
+Current public OASIS-1 training command:
 
 ```bash
 python -m src.train_multitask --config configs/oasis1_200_multitask.yaml
@@ -229,7 +229,7 @@ Cognitive/severity prediction:
 Current public OASIS-1 evaluation command:
 
 ```bash
-python -m src.evaluate_oasis1_demo \
+python -m src.evaluate_oasis1 \
   --config configs/oasis1_200_multitask.yaml \
   --checkpoint models/oasis1_200_multitask.ckpt \
   --output-dir outputs/oasis1_200_eval

@@ -3,7 +3,7 @@ task: single_t1_anatomy_dementia_cognition_oasis1
 manifest: data/manifests/oasis1_200_manifest.csv
 segmentation_root: data/processed/oasis/fast_demo
 output_dir: outputs/oasis1_200_multitask
-pretrained_checkpoint: models/hcp_demo_smoke.ckpt
+pretrained_checkpoint:
 checkpoint_path: models/oasis1_200_multitask.ckpt
 target_shape: [64, 64, 64]
 batch_size: 1

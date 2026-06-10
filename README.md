@@ -1,6 +1,6 @@
 # Single-MRI Alzheimer's Multitask Pipeline
 
-This project implements a public-data prototype of the Ma et al. UCSF modeling strategy:
+This repository implements a public-data reproduction scaffold for the Ma et al. UCSF modeling strategy:
 
 ```text
 Single T1 MRI scan
@@ -82,11 +82,11 @@ Current test results:
 | Output | Metric | Test result | Interpretation |
 | --- | ---: | ---: | --- |
 | Anatomical segmentation | Dice | 0.884 | The model learned tissue/anatomy segmentation well. |
-| Dementia classification | Balanced accuracy | 0.500 | Not clinically successful yet; predictions stayed near the decision boundary. |
-| Dementia classification | AUC | 0.758 | Ranking signal exists, but the fixed 0.5 threshold did not separate classes. |
-| Cognitive prediction | MMSE MAE | 2.62 | The model mostly predicts near the cohort mean; useful baseline, not final. |
+| Dementia classification | Balanced accuracy | 0.500 | Classification performance is limited in the current OASIS-1 run. |
+| Dementia classification | AUC | 0.758 | Probability ranking shows preliminary signal, but thresholded classification remains limited. |
+| Cognitive prediction | MMSE MAE | 2.62 | Baseline cognitive prediction result on the current split. |
 
-This means the project currently demonstrates the full technical pipeline, but it does not yet claim a reliable AD detector.
+These results demonstrate the end-to-end technical pipeline. They should not be interpreted as final clinical performance.
 
 Notebook summary:
 
@@ -150,7 +150,7 @@ python -m src.train_multitask --config configs/oasis1_medicalnet_multitask.yaml
 Evaluate the three outputs:
 
 ```bash
-python -m src.evaluate_oasis1_demo \
+python -m src.evaluate_oasis1 \
   --config configs/oasis1_200_multitask.yaml \
   --checkpoint models/oasis1_200_multitask.ckpt \
   --output-dir outputs/oasis1_200_eval
@@ -168,7 +168,7 @@ This is a public-data analogue. It demonstrates:
 
 It does not claim exact reproduction of ADNI/ADAS-Cog11 results without ADNI access.
 
-See `docs/project_report.md` for a concise professor-facing explanation of the current experiment, results, limitations, and next steps.
+See `docs/project_report.md` for a concise project summary, current results, limitations, and next steps.
 
 ## UCSF-Like Extensions
 
@@ -178,6 +178,6 @@ The repo now includes implementation hooks for the next UCSF-like upgrades:
 | --- | --- | --- |
 | Co-registration | `src/coregister_mri.py` | Ready when a template MRI is available |
 | MedicalNet backbone | `configs/oasis1_medicalnet_multitask.yaml` | Ready when `vendor/MedicalNet` is cloned |
-| Richer CDR labels | `src/prepare_oasis1_demo.py` | Added for newly generated manifests |
+| Richer CDR labels | `src/prepare_oasis1.py` | Supported for newly generated manifests |
 | Age/sex covariates | `configs/oasis1_200_covariates_multitask.yaml` | Ready for next training run |
 | Longitudinal/future prediction | `src/build_longitudinal_manifest.py` | Requires OASIS-2, ADNI, or lab follow-up data |

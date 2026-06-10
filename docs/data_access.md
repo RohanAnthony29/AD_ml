@@ -17,9 +17,9 @@ Use OASIS as the ADNI substitute.
 - Needed files: T1-weighted MRI and clinical/demographic tables.
 - Useful targets: CDR, MMSE, dementia/nondementia status.
 
-Recommended for the first demo:
+Recommended for the first reproducible run:
 
-1. Start with a tiny sample, for example 5-20 scans.
+1. Start with a small sample, for example 5-20 scans.
 2. Build `data/manifests/oasis_manifest.csv`.
 3. Run FSL-FAST on those scans.
 4. Run a smoke-test training pass.

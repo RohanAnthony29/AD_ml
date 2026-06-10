@@ -94,7 +94,7 @@ def evaluate(config_path: Path, checkpoint_path: Path, output_dir: Path) -> None
                 visual_batches.append((clinical, batch, outputs))
 
     predictions = pd.DataFrame(rows)
-    predictions.to_csv(output_dir / "oasis1_demo_predictions.csv", index=False)
+    predictions.to_csv(output_dir / "predictions.csv", index=False)
 
     metric_rows = []
     for split_name, split_df in [("all", predictions)] + list(predictions.groupby("split")):
@@ -119,7 +119,7 @@ def evaluate(config_path: Path, checkpoint_path: Path, output_dir: Path) -> None
             }
         )
     metrics = pd.DataFrame(metric_rows)
-    metrics.to_csv(output_dir / "oasis1_demo_metrics.csv", index=False)
+    metrics.to_csv(output_dir / "metrics.csv", index=False)
 
     y_true = predictions["true_label"]
     y_pred = predictions["pred_label"]
@@ -131,7 +131,7 @@ def evaluate(config_path: Path, checkpoint_path: Path, output_dir: Path) -> None
     for i in range(2):
         for j in range(2):
             ax.text(j, i, str(cm[i, j]), ha="center", va="center", color="black", fontsize=14)
-    ax.set_title("OASIS-1 Demo Confusion Matrix")
+    ax.set_title("OASIS-1 Confusion Matrix")
     fig.tight_layout()
     fig.savefig(output_dir / "confusion_matrix.png", dpi=160)
     plt.close(fig)
@@ -170,10 +170,10 @@ def evaluate(config_path: Path, checkpoint_path: Path, output_dir: Path) -> None
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Evaluate the OASIS-1 demo multitask checkpoint.")
-    parser.add_argument("--config", type=Path, default=Path("configs/oasis1_demo_multitask.yaml"))
-    parser.add_argument("--checkpoint", type=Path, default=Path("models/oasis1_demo_multitask.ckpt"))
-    parser.add_argument("--output-dir", type=Path, default=Path("outputs/oasis1_demo_eval"))
+    parser = argparse.ArgumentParser(description="Evaluate the OASIS-1 multitask checkpoint.")
+    parser.add_argument("--config", type=Path, default=Path("configs/oasis1_200_multitask.yaml"))
+    parser.add_argument("--checkpoint", type=Path, default=Path("models/oasis1_200_multitask.ckpt"))
+    parser.add_argument("--output-dir", type=Path, default=Path("outputs/oasis1_200_eval"))
     args = parser.parse_args()
     evaluate(args.config, args.checkpoint, args.output_dir)
 

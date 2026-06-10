@@ -4,7 +4,7 @@ Use AWS for MRI preprocessing when local disk space is too small for FSL.
 
 ## Recommended Instance
 
-For the first HCP/OASIS preprocessing demo:
+For the first HCP/OASIS preprocessing run:
 
 ```text
 AMI: Ubuntu Server 22.04 LTS
@@ -77,7 +77,7 @@ Default region: us-east-1
 Default output format: json
 ```
 
-## Run HCP FAST Demo
+## Run HCP FAST Preprocessing
 
 Copy and run the pipeline script:
 

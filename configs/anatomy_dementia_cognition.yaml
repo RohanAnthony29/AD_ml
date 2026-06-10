@@ -38,7 +38,7 @@ pipeline:
         - MAE
         - RMSE
 
-current_public_demo:
+current_public_run:
   dataset: OASIS-1
   config: configs/oasis1_200_multitask.yaml
   covariate_config: configs/oasis1_200_covariates_multitask.yaml
