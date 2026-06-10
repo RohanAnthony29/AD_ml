@@ -1,2 +1,1 @@
-"""Public-data Alzheimer's MRI reproduction scaffold."""
-
+"""Public-data dementia and cognition MRI reproduction scaffold."""

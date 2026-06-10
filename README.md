@@ -1,4 +1,4 @@
-# Single-MRI Alzheimer's Multitask Pipeline
+# Single-MRI Dementia and Cognition Multitask Pipeline
 
 This repository implements a public-data reproduction scaffold for the Ma et al. UCSF modeling strategy:
 
@@ -9,7 +9,7 @@ Single T1 MRI scan
 -> cognitive prediction
 ```
 
-The current implementation uses OASIS-1 as an ADNI substitute. Each subject contributes one T1-weighted MRI scan, FSL-FAST provides gray matter / white matter / CSF tissue labels, and a 3D multitask network learns one shared anatomical representation with three outputs: segmentation, dementia probability, and MMSE prediction.
+The current implementation uses OASIS-1 as an ADNI substitute. Each subject contributes one T1-weighted MRI scan, FSL-FAST provides gray matter / white matter / CSF tissue labels, and a 3D multitask network learns one shared anatomical representation with three outputs: segmentation, CDR-based dementia-status probability, and MMSE prediction.
 
 Original paper:
 
@@ -30,7 +30,7 @@ Outputs:
   1. Anatomical representation / segmentation
      - FAST-style background / CSF / gray matter / white matter labels
 
-  2. Dementia classification
+  2. CDR-based dementia-status classification
      - OASIS label: CDR 0 = control, CDR > 0 = impaired/dementia
 
   3. Cognitive prediction
@@ -82,8 +82,8 @@ Current test results:
 | Output | Metric | Test result | Interpretation |
 | --- | ---: | ---: | --- |
 | Anatomical segmentation | Dice | 0.884 | The model learned tissue/anatomy segmentation well. |
-| Dementia classification | Balanced accuracy | 0.500 | Classification performance is limited in the current OASIS-1 run. |
-| Dementia classification | AUC | 0.758 | Probability ranking shows preliminary signal, but thresholded classification remains limited. |
+| CDR-based dementia-status classification | Balanced accuracy | 0.500 | Classification performance is limited in the current OASIS-1 run. |
+| CDR-based dementia-status classification | AUC | 0.758 | Probability ranking shows preliminary signal, but thresholded classification remains limited. |
 | Cognitive prediction | MMSE MAE | 2.62 | Baseline cognitive prediction result on the current split. |
 
 These results demonstrate the end-to-end technical pipeline. They should not be interpreted as final clinical performance.
@@ -163,7 +163,7 @@ This is a public-data analogue. It demonstrates:
 - T1 MRI input handling
 - FSL-FAST tissue segmentation targets
 - 3D UNet-style anatomical representation / segmentation
-- Dementia classification from a single MRI using CDR-derived labels
+- CDR-based dementia-status classification from a single MRI using CDR-derived labels
 - Cognitive prediction from a single MRI using MMSE
 
 It does not claim exact reproduction of ADNI/ADAS-Cog11 results without ADNI access.

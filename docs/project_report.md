@@ -52,7 +52,7 @@ Segmentation head:
   predicts background / CSF / gray matter / white matter
 
 Classification head:
-  predicts dementia probability
+  predicts CDR-based dementia-status probability
 
 Cognition head:
   predicts MMSE score
@@ -74,9 +74,9 @@ Current OASIS-1 test-set results:
 | Task | Metric | Test result |
 | --- | ---: | ---: |
 | Anatomical segmentation | Dice | 0.884 |
-| Dementia classification | Accuracy | 0.519 |
-| Dementia classification | Balanced accuracy | 0.500 |
-| Dementia classification | AUC | 0.758 |
+| CDR-based dementia-status classification | Accuracy | 0.519 |
+| CDR-based dementia-status classification | Balanced accuracy | 0.500 |
+| CDR-based dementia-status classification | AUC | 0.758 |
 | Cognitive prediction | MMSE MAE | 2.62 |
 | Cognitive prediction | MMSE RMSE | 3.37 |
 
@@ -95,7 +95,7 @@ This project demonstrates that the full workflow is operational:
 - OASIS MRI and clinical data are converted into a manifest.
 - T1 MRI volumes are downsampled and loaded into a 3D model.
 - FSL-FAST tissue segmentations are used as anatomical targets.
-- A single model produces segmentation, dementia probability, and MMSE prediction.
+- A single model produces segmentation, CDR-based dementia-status probability, and MMSE prediction.
 - Results are evaluated with segmentation, classification, and regression metrics.
 - Outputs are saved as CSV tables and visualization figures.
 
