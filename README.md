@@ -88,6 +88,10 @@ Current test results:
 
 This means the project currently demonstrates the full technical pipeline, but it does not yet claim a reliable AD detector.
 
+Notebook summary:
+
+- `notebooks/oasis1_200_evaluation.ipynb`
+
 ## Quick Start
 
 Create the environment:
