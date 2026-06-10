@@ -5,7 +5,7 @@ This repository implements a public-data reproduction scaffold for the Ma et al.
 ```text
 Single T1 MRI scan
 -> anatomical representation / tissue segmentation
--> dementia classification
+-> CDR-based dementia-status classification
 -> cognitive prediction
 ```
 

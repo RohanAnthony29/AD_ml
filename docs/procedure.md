@@ -7,11 +7,11 @@ This project reproduces the modeling strategy of Ma et al. using public substitu
 ```text
 Single T1 MRI
 -> anatomical representation / segmentation
--> dementia classification
+-> CDR-based dementia-status classification
 -> cognitive prediction
 ```
 
-HCP-YA can be used for segmentation/anatomical pretraining. OASIS-1/2 is used as an ADNI substitute for dementia classification and MMSE/CDR prediction.
+HCP-YA can be used for segmentation/anatomical pretraining. OASIS-1/2 is used as an ADNI substitute for CDR-based dementia-status classification and MMSE/CDR prediction.
 
 ## 2. Get Code
 
@@ -149,7 +149,7 @@ Output 1:
   tissue segmentation map
 
 Output 2:
-  dementia classification
+  CDR-based dementia-status classification
 
 Output 3:
   MMSE or CDR cognitive/severity prediction

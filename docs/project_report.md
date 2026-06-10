@@ -7,7 +7,7 @@ This project implements a public-data reproduction scaffold for the UCSF single-
 ```text
 Single T1 MRI scan
 -> anatomical representation / segmentation
--> dementia classification
+-> CDR-based dementia-status classification
 -> cognitive prediction
 ```
 
@@ -84,7 +84,7 @@ Current OASIS-1 test-set results:
 
 The anatomical segmentation task worked well. A test Dice score around 0.88 shows that the model learned tissue-level anatomical structure from the T1 MRI.
 
-The dementia classification result is limited in the current OASIS-1 experiment. Predicted probabilities stayed near 0.494, so the default 0.5 threshold classified all subjects as control. This produced chance-level balanced accuracy, while the AUC indicates preliminary ranking signal.
+The CDR-based dementia-status classification result is limited in the current OASIS-1 experiment. Predicted probabilities stayed near 0.494, so the default 0.5 threshold classified all subjects as control. This produced chance-level balanced accuracy, while the AUC indicates preliminary ranking signal.
 
 The MMSE head provides a baseline regression result, with predictions concentrated near the cohort mean.
 
@@ -128,4 +128,4 @@ To move closer to the UCSF study design, the following are needed:
 
 ## Summary
 
-This repository implements a UCSF-style single-MRI multitask pipeline using public OASIS-1 data. The model takes one T1 MRI and produces three outputs: tissue/anatomical segmentation, dementia classification, and MMSE cognitive prediction. On 174 OASIS-1 subjects, the segmentation task performs well, while the clinical prediction tasks remain limited under the current public-data and training setup. The repository provides a structured baseline for further development with richer labels, longitudinal data, stronger preprocessing, and GPU training.
+This repository implements a UCSF-style single-MRI multitask pipeline using public OASIS-1 data. The model takes one T1 MRI and produces three outputs: tissue/anatomical segmentation, CDR-based dementia-status classification, and MMSE cognitive prediction. On 174 OASIS-1 subjects, the segmentation task performs well, while the clinical prediction tasks remain limited under the current public-data and training setup. The repository provides a structured baseline for further development with richer labels, longitudinal data, stronger preprocessing, and GPU training.

@@ -29,7 +29,7 @@ Recommended for the first reproducible run:
 This project can reproduce the modeling strategy:
 
 ```text
-single T1 MRI -> segmentation/anatomy representation -> dementia classification -> cognition/severity prediction
+single T1 MRI -> segmentation/anatomy representation -> CDR-based dementia-status classification -> cognition/severity prediction
 ```
 
 It cannot reproduce the exact ADNI results without ADNI because OASIS does not provide the same labels, splits, ADAS-Cog11 target, and longitudinal outcome structure.
